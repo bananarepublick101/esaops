@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESA Gaming — Game Ops Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* ESA Gaming brand palette */
+  --esa: #8ac543;
+  --esa-dk: #6ba030;
+  --esa-lt: rgba(138,197,67,0.08);
+  --esa-blue: #4264D1;
+  --esa-cyan: #6CE2FF;
+  --esa-purple: #9b4495;
+  
+  /* Light theme surfaces */
+  --bg: #f7f8fa;
+  --s1: #ffffff;
+  --s2: #f0f1f4;
+  --s3: #e8eaef;
+  --brd: #e0e2e8;
+  --brd2: #ccd0d8;
+  
+  /* Text */
+  --tx: #1a1d26;
+  --tx2: #5c6070;
+  --tx3: #8b8f9e;
+  
+  /* Accent = ESA green */
+  --acc: #8ac543;
+  --acc2: rgba(138,197,67,0.10);
+  
+  /* Semantic colors */
+  --grn: #2ea84e;
+  --grn2: rgba(46,168,78,0.08);
+  --ylw: #d49212;
+  --ylw2: rgba(212,146,18,0.08);
+  --red: #d94040;
+  --red2: rgba(217,64,64,0.06);
+  --pur: #7c5cbf;
+  --pur2: rgba(124,92,191,0.08);
+  --cyn: #0e8fa0;
+  --cyn2: rgba(14,143,160,0.08);
+  --gry: #8b8f9e;
+  --gry2: rgba(139,143,158,0.10);
+  
+  --r: 8px;
+  --r2: 12px;
+  --mono: 'IBM Plex Mono', monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
+
+/* ===== TOP BAR ===== */
+.top{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--brd);padding:0 20px;height:52px;display:flex;align-items:center;gap:12px}
+.brand{font-weight:800;font-size:15px;letter-spacing:-.5px;color:var(--esa);white-space:nowrap}
+.brand span{color:var(--tx3);font-weight:400;font-size:13px}
+
+/* Connection status */
+.conn{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:10px;letter-spacing:.3px}
+.conn.ok{background:var(--grn2);color:var(--grn)}
+.conn.err{background:var(--red2);color:var(--red)}
+.conn.loading{background:var(--ylw2);color:var(--ylw)}
+.conn-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.conn.loading .conn-dot{animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.srch{margin-left:auto;position:relative;width:200px}
+.srch input{width:100%;padding:5px 9px 5px 26px;border-radius:6px;border:1px solid var(--brd);background:var(--s2);color:var(--tx);font-size:11px;font-family:inherit;outline:none;transition:border .2s}
+.srch input::placeholder{color:var(--tx3)}
+.srch input:focus{border-color:var(--acc)}
+.srch::before{content:'⌕';position:absolute;left:7px;top:50%;transform:translateY(-50%);color:var(--tx3);font-size:13px}
+.tbtn{padding:4px 10px;border-radius:5px;border:1px solid var(--brd);background:var(--s1);color:var(--tx2);font-size:10px;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s;white-space:nowrap}
+.tbtn:hover{border-color:var(--acc);color:var(--tx)}
+
+/* ===== TABS ===== */
+.tabs{display:flex;padding:0 20px;background:var(--s1);border-bottom:1px solid var(--brd);overflow-x:auto}
+.tab{padding:9px 14px;font-size:11px;font-weight:500;color:var(--tx3);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:5px}
+.tab.on{color:var(--acc);border-bottom-color:var(--acc);font-weight:600}
+.tab:hover:not(.on){color:var(--tx2)}
+.nbadge{font-size:8px;font-weight:700;padding:1px 5px;border-radius:8px;line-height:1.4}
+.nbadge.r{background:var(--red);color:#fff}
+.nbadge.b{background:var(--acc);color:#fff}
+
+/* ===== STATS ===== */
+.stats{display:flex;gap:8px;padding:12px 20px;overflow-x:auto}
+.st{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);padding:10px 14px;flex:1;min-width:110px;cursor:pointer;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.st:hover{border-color:var(--acc);transform:translateY(-1px);box-shadow:0 3px 8px rgba(138,197,67,.12)}
+.st.on{border-color:var(--acc);background:var(--acc2)}
+.sv{font-size:24px;font-weight:700;font-family:var(--mono);line-height:1}
+.sl{font-size:9px;font-weight:600;color:var(--tx2);margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+.pb{width:100%;height:4px;background:var(--s2);border-radius:2px;margin-top:6px;overflow:hidden}
+.pf{height:100%;border-radius:2px;transition:width .5s}
+
+/* ===== FILTERS ===== */
+.flts{display:flex;gap:6px;padding:0 20px 8px;flex-wrap:wrap;align-items:center}
+.flts select,.flts .fb{padding:4px 8px;border-radius:5px;border:1px solid var(--brd);background:var(--s1);color:var(--tx2);font-size:10px;font-family:inherit;cursor:pointer;outline:none}
+.flts select{appearance:none;padding-right:20px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' fill='%235c6070'%3E%3Cpath d='M0 2l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center}
+
+/* ===== TABLES ===== */
+.tw{padding:0 20px 20px;overflow-x:auto}
+table.dt{width:100%;border-collapse:separate;border-spacing:0;font-size:11px}
+.dt thead th{position:sticky;top:0;z-index:5;background:var(--s1);padding:7px 6px;text-align:left;font-weight:600;color:var(--tx2);font-size:9px;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--brd);white-space:nowrap}
+.dt thead th.sk{position:sticky;left:0;z-index:10;background:var(--s1);min-width:140px}
+.dt tbody td{padding:4px 6px;border-bottom:1px solid var(--brd);vertical-align:middle}
+.dt tbody td.sk{position:sticky;left:0;z-index:2;background:var(--bg);font-weight:600;white-space:nowrap}
+.dt tbody tr:hover td{background:var(--s2)!important}
+.dt tbody tr:hover td.sk{background:var(--s2)!important}
+
+/* ===== BADGES ===== */
+.bg{display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600;cursor:pointer;transition:all .12s;border:none;min-width:48px;text-align:center}
+.bg:hover{transform:scale(1.06);filter:brightness(1.08)}
+/* Solid fills with white text for key statuses */
+.bg.certified,.bg.received,.bg.live,.bg.completed,.bg.done{background:#2ea84e;color:#fff}
+.bg.sent,.bg.branded,.bg.inprogress{background:#d49212;color:#fff}
+.bg.pending,.bg.todo{background:#d94040;color:#fff}
+.bg.na,.bg.notavailable{background:#e0e2e8;color:#8b8f9e}
+.bg.requested{background:#7c5cbf;color:#fff}
+.bg.testing{background:#0e8fa0;color:#fff}
+.bg.s{font-size:8px;padding:1px 4px;min-width:0}
+.adm{font-family:var(--mono);font-size:8px;color:var(--tx3);margin-top:1px}
+.dim{opacity:.2}
+.sc{text-align:center;min-width:66px}
+.link-icon{font-size:10px;cursor:pointer;opacity:.5;transition:opacity .15s}
+.link-icon:hover{opacity:1}
+
+/* ===== CHECKLIST ===== */
+.cl-w{max-width:760px;margin:0 auto;padding:16px 20px}
+.cl-sec{margin-bottom:16px}
+.cl-sh{font-size:12px;font-weight:700;margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:6px}
+.cl-sh .ct{font-size:9px;font-weight:600;color:var(--tx3);background:var(--s2);padding:1px 5px;border-radius:6px}
+.cl-i{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:5px;cursor:pointer;transition:background .1s;font-size:12px}
+.cl-i:hover{background:var(--s2)}
+.cl-ck{width:16px;height:16px;border-radius:3px;border:2px solid var(--brd2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;color:transparent;transition:all .15s}
+.cl-i.dn .cl-ck{background:var(--grn);border-color:var(--grn);color:#fff}
+.cl-i.dn .cl-lb{color:var(--tx3);text-decoration:line-through}
+.cl-lb{flex:1}
+.cl-as{font-size:9px;color:var(--tx3);background:var(--s2);padding:1px 6px;border-radius:3px}
+
+/* ===== CONTACTS ===== */
+.cc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;padding:16px 20px}
+.cc{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);padding:14px;transition:border-color .2s;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.cc:hover{border-color:var(--acc)}
+.cc-r{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--acc);margin-bottom:3px}
+.cc-n{font-size:14px;font-weight:700}
+.cc-d{font-size:11px;color:var(--tx2);margin-top:3px;line-height:1.4}
+
+/* ===== PIPELINE ===== */
+.pl-c{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);padding:14px;margin-bottom:10px;transition:border-color .2s;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.pl-c:hover{border-color:var(--acc)}
+.pl-n{font-size:14px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.pl-stages{display:flex;gap:3px;margin-bottom:8px}
+.pl-stg{flex:1;text-align:center;padding:5px 3px;border-radius:3px;font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.pl-stg.c{background:var(--grn2);color:var(--grn)}
+.pl-stg.a{background:var(--ylw2);color:var(--ylw);border:1px solid rgba(212,146,18,.2)}
+.pl-stg.u{background:var(--s2);color:var(--tx3)}
+
+/* ===== SIDE PANEL ===== */
+.sp{display:none;position:fixed;right:0;top:52px;bottom:0;width:350px;background:var(--s1);border-left:1px solid var(--brd);z-index:50;overflow-y:auto;padding:18px;box-shadow:-8px 0 28px rgba(0,0,0,.08)}
+.sp.open{display:block}
+.sp-x{position:absolute;top:8px;right:10px;background:none;border:none;color:var(--tx3);font-size:15px;cursor:pointer}
+.sp h3{font-size:16px;padding-right:28px}
+.sp-sub{font-size:10px;color:var(--tx2);line-height:1.5;margin:4px 0 12px;white-space:pre-line}
+.sp-sts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px}
+.sp-st{background:var(--s2);border-radius:5px;padding:7px;text-align:center}
+.sp-st .v{font-size:17px;font-weight:700;font-family:var(--mono)}
+.sp-st .l{font-size:8px;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px}
+.sp-list{list-style:none}
+.sp-list li{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--brd);font-size:11px}
+
+/* ===== MODAL ===== */
+.mo-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.25);backdrop-filter:blur(3px);z-index:200;align-items:center;justify-content:center}
+.mo-bg.open{display:flex}
+.mo{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r2);padding:20px;width:90%;max-width:420px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.12)}
+.mo h3{font-size:14px;margin-bottom:2px}
+.mo .ms{font-size:11px;color:var(--tx2);margin-bottom:12px}
+.mo label{display:block;font-size:10px;font-weight:500;color:var(--tx2);margin:8px 0 2px}
+.mo input,.mo select{width:100%;padding:6px 9px;border-radius:5px;border:1px solid var(--brd);background:var(--s2);color:var(--tx);font-size:11px;font-family:inherit;outline:none}
+.mo input:focus,.mo select:focus{border-color:var(--acc)}
+.mo-btns{display:flex;gap:6px;margin-top:14px;justify-content:flex-end}
+.btn{padding:6px 12px;border-radius:5px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;border:1px solid var(--brd);transition:all .12s}
+.btn-p{background:var(--acc);color:#fff;border-color:var(--acc)}.btn-p:hover{opacity:.9}
+.btn-g{background:transparent;color:var(--tx2)}.btn-g:hover{color:var(--tx)}
+
+/* Tab content */
+.tc{display:none}.tc.on{display:block;animation:fi .2s ease}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* Loading state */
+.loading-overlay{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:12px}
+.spinner{width:28px;height:28px;border:3px solid var(--brd);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-msg{font-size:12px;color:var(--tx2)}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="brand">ESA Gaming <span>/ Game Ops</span></div>
+  <div class="conn loading" id="connStatus"><div class="conn-dot"></div><span>Connecting…</span></div>
+  <div class="srch"><input type="text" id="searchInput" placeholder="Search… (⌘K)" oninput="doSearch(this.value)"></div>
+  <button class="tbtn" onclick="refreshData()">↻ Refresh</button>
+  <button class="tbtn" onclick="exportCSV()">↓ Export</button>
+</div>
+
+<div class="tabs" id="mainTabs">
+  <button class="tab on" data-t="mktcerts">Market Certs</button>
+  <button class="tab" data-t="branded">Branded Certs <span class="nbadge r" id="nbPend">0</span></button>
+  <button class="tab" data-t="proposals">Proposals <span class="nbadge b" id="nbProp">0</span></button>
+  <button class="tab" data-t="pipeline">Pipeline</button>
+  <button class="tab" data-t="checklist">Checklist</button>
+  <button class="tab" data-t="audits">Audit Reports</button>
+  <button class="tab" data-t="contacts">Contacts</button>
+</div>
+
+<!-- ====== MARKET CERTS ====== -->
+<div class="tc on" id="tc-mktcerts">
+  <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div class="load-msg">Connecting to Google Sheets…</div></div>
+  <div id="mktContent" style="display:none">
+    <div class="stats" id="mktStats"></div>
+    <div class="flts">
+      <select id="fMktStatus" onchange="renderMktCerts()">
+        <option value="">All Statuses</option>
+        <option value="certified">✓ Certified</option>
+        <option value="inprogress">⏳ In Progress</option>
+        <option value="notavailable">— Not Available</option>
+      </select>
+      <button class="fb" onclick="clearMktF()">Clear</button>
+    </div>
+    <div class="tw"><table class="dt"><thead id="mktHead"></thead><tbody id="mktBody"></tbody></table></div>
+  </div>
+</div>
+
+<!-- ====== BRANDED CERTS ====== -->
+<div class="tc" id="tc-branded">
+  <div class="stats" id="brdStats"></div>
+  <div class="flts">
+    <select id="fBrdMarket" onchange="renderBranded()">
+      <option value="italy">🇮🇹 Italy</option>
+      <option value="brazil">🇧🇷 Brazil</option>
+    </select>
+    <select id="fBrdOp" onchange="renderBranded()"><option value="">All Operators</option></select>
+    <select id="fBrdSt" onchange="renderBranded()">
+      <option value="">All Statuses</option>
+      <option value="Received">✓ Received</option>
+      <option value="Sent">→ Sent</option>
+      <option value="Pending">⚠ Pending</option>
+      <option value="N/A">— N/A</option>
+    </select>
+    <button class="fb" onclick="clearBrdF()">Clear</button>
+  </div>
+  <div class="tw"><table class="dt"><thead id="brdHead"></thead><tbody id="brdBody"></tbody></table></div>
+</div>
+
+<!-- ====== PROPOSALS ====== -->
+<div class="tc" id="tc-proposals">
+  <div class="tw" style="padding-top:12px">
+    <table class="dt"><thead><tr><th>#</th><th>Proposal ID</th><th>Project Type</th><th>Markets</th><th>Deadline</th><th>Status</th></tr></thead><tbody id="propBody"></tbody></table>
+  </div>
+</div>
+
+<!-- ====== PIPELINE ====== -->
+<div class="tc" id="tc-pipeline">
+  <div style="padding:12px 20px 4px;display:flex;justify-content:space-between;align-items:center">
+    <div style="font-size:12px;color:var(--tx2)">Game lifecycle tracking — from handover checklist</div>
+    <button class="tbtn" onclick="openNewGame()">+ New Game</button>
+  </div>
+  <div style="padding:0 20px 20px" id="pipeList"></div>
+</div>
+
+<!-- ====== CHECKLIST ====== -->
+<div class="tc" id="tc-checklist">
+  <div style="padding:12px 20px 0;display:flex;justify-content:space-between;align-items:center">
+    <div><div style="font-size:14px;font-weight:700">Game Launch Checklist</div><div style="font-size:11px;color:var(--tx2);margin-top:1px">From Stefan's handover — select a game</div></div>
+    <select id="clSel" onchange="renderCL()" style="padding:5px 8px;border-radius:5px;border:1px solid var(--brd);background:var(--s1);color:var(--tx);font-size:11px;font-family:inherit;outline:none"><option value="">Select game…</option></select>
+  </div>
+  <div class="cl-w" id="clWrap"></div>
+</div>
+
+<!-- ====== AUDITS ====== -->
+<div class="tc" id="tc-audits">
+  <div class="tw" style="padding-top:12px">
+    <table class="dt"><thead><tr><th>Games</th><th>Operator</th><th>Test Lab</th><th>Delivered</th><th>Status</th></tr></thead><tbody id="auditBody"></tbody></table>
+  </div>
+</div>
+
+<!-- ====== CONTACTS ====== -->
+<div class="tc" id="tc-contacts">
+  <div style="padding:12px 20px 4px"><div style="font-size:12px;color:var(--tx2)">Key contacts from Stefan's handover</div></div>
+  <div class="cc-grid" id="ccGrid"></div>
+</div>
+
+<!-- SIDE PANEL -->
+<div class="sp" id="sPanel"><button class="sp-x" onclick="closeP()">✕</button><div id="sPInner"></div></div>
+
+<!-- EDIT MODAL -->
+<div class="mo-bg" id="editMo"><div class="mo">
+  <h3 id="moT">Edit Certificate</h3><div class="ms" id="moS"></div>
+  <label>Status</label><select id="moSt"><option value="Received">Received</option><option value="Sent">Sent</option><option value="Pending">Pending</option><option value="Requested">Requested</option><option value="In Testing">In Testing</option><option value="N/A">N/A</option></select>
+  <label>ADM Code</label><input type="text" id="moAdm" placeholder="e.g. 123456">
+  <label>Notes</label><input type="text" id="moNotes" placeholder="Optional…">
+  <div class="mo-btns"><button class="btn btn-g" onclick="closeMo()">Cancel</button><button class="btn btn-p" onclick="saveMo()">Save</button></div>
+</div></div>
+
+<!-- NEW GAME MODAL -->
+<div class="mo-bg" id="newGMo"><div class="mo">
+  <h3>Add Game to Pipeline</h3><div class="ms">Creates a new entry with a fresh checklist</div>
+  <label>Game Name</label><input type="text" id="ngN" placeholder="e.g. Treasure Temple">
+  <label>Game ID</label><input type="text" id="ngI" placeholder="e.g. 25030">
+  <div class="mo-btns"><button class="btn btn-g" onclick="closeNG()">Cancel</button><button class="btn btn-p" onclick="saveNG()">Create</button></div>
+</div></div>
+
+<script>
+// ===== CONFIG =====
+const CONFIG = {
+  apiKey: 'AIzaSyC5duHYdeJ5xnQEtuHzzOVeEOaGz_v9tDA',
+  sheets: {
+    certs:     { id: '1HuAv147P4XdCu6wZSp122nk98v81LIRmSJnZBOg4NUc', tab: 'ESA Games' },
+    proposals: { id: '1lSsv-JhP_08TIqfG2h_fxR0OMM0JUkBXaxe1_HZi9PI', tab: 'Sheet1' },
+    italy:     { id: '1FmTDM3sLNDusDTSyLeI1IrC1sMzNfiqrN8fCucut4-Q', tab: 'Italy Branded New x Stefan' },
+    brazil:    { id: '1FmTDM3sLNDusDTSyLeI1IrC1sMzNfiqrN8fCucut4-Q', tab: 'Brazil Branded reports' },
+    audits:    { id: '1FmTDM3sLNDusDTSyLeI1IrC1sMzNfiqrN8fCucut4-Q', tab: 'Audit Branded Reports' }
+  },
+  markets: [
+    {id:'mga',name:'MGA',col:1},
+    {id:'italy',name:'Italy',col:2,hasBranded:true},
+    {id:'portugal',name:'Portugal',col:3,hasSymbolMap:true},
+    {id:'greece',name:'Greece',col:4},
+    {id:'brazil',name:'Brazil',col:5,hasBranded:true},
+    {id:'southafrica',name:'S. Africa',col:6},
+    {id:'romania',name:'Romania',col:7},
+    {id:'colombia',name:'Colombia',col:8},
+    {id:'lithuania',name:'Lithuania',col:9},
+    {id:'denmark',name:'Denmark',col:10},
+    {id:'sweden',name:'Sweden',col:11},
+    {id:'croatia',name:'Croatia',col:12}
+  ]
+};
+
+// ===== GLOBAL STATE =====
+let DB = { mktCerts: [], branded: { italy: { ops:[], games:[] }, brazil: { ops:[], games:[] } }, proposals: [], audits: [] };
+let searchQ = '';
+let editTarget = null;
+let pipeGames = [];
+
+// ===== CONTACTS (from handover) =====
+const CONTACTS = [
+  {role:'Proposal Approval / MGA Certs',name:'Zorica',note:'Signs proposals. Must always be CC\'d. Receives MGA certs with Game Spec + Rules.'},
+  {role:'Greek Certificates',name:'Petar',note:'Receives GR certs — expects 2 ZIP files: Certificates + Game Docs (EN & EL).'},
+  {role:'ADM Codes (Italy)',name:'Nevena',note:'Provides ADM codes for Italian market games.'},
+  {role:'BE Developer',name:'Kund',note:'Game ID assignment & backend setup.'},
+  {role:'FE Developer',name:'Marko / Branko',note:'Frontend setup. Symbol mapping for Portugal. Translations JSON.'},
+  {role:'Website & Design',name:'Tom',note:'Creates thumbnails and game sheets for website.'},
+  {role:'BE — Currency & Limits',name:'Laszlo',note:'New currency setup and bet limits/max exposure per operator.'},
+  {role:'Website Mockups',name:'Stefan R.',note:'Receives screenshots for phone mockups.'},
+  {role:'CS / Win Checks',name:'Sava',note:'Session closure and win check tickets.'},
+  {role:'Test Lab (IT, MT, PT, BR, GR)',name:'GA',note:'Primary test lab for Italy, Malta, Portugal, Brazil, Greece.'},
+  {role:'Test Lab (South Africa)',name:'BMM',note:'Test lab for South African market.'}
+];
+
+// ===== CHECKLIST TEMPLATE (from handover) =====
+const CL_TPL = [
+  {s:'Development Start',items:[{l:'Game ID assigned (BO Test)',a:'Kund'},{l:'BE developer notified',a:'Kund'},{l:'FE developer notified',a:'Marko/Branko'}]},
+  {s:'Certification — Proposal',items:[{l:'Proposal requested from test lab',a:''},{l:'Zorica CC\'d on proposal',a:'Zorica'},{l:'Proposal signed & approved',a:'Zorica'},{l:'Proposal tracking updated',a:''}]},
+  {s:'Certification — Submission',items:[{l:'GDD sent to test lab',a:''},{l:'External Rules sent',a:''},{l:'Math File sent',a:''}]},
+  {s:'During Certification',items:[{l:'Test lab queries resolved',a:''},{l:'Internal clarifications completed',a:''}]},
+  {s:'Certificates Received',items:[{l:'Uploaded to GDrive',a:''},{l:'Game Certificate Sheet updated',a:''}]},
+  {s:'Distribution',items:[{l:'MGA cert → Zorica (+ spec + rules)',a:'Zorica'},{l:'GR cert → Petar (2 ZIPs)',a:'Petar'}]},
+  {s:'Market Requirements',items:[{l:'Branded report requested (IT/BR)',a:''},{l:'ADM codes added',a:'Nevena'},{l:'Portugal symbol mapping',a:'FE Dev'},{l:'Game Spec docs per market',a:''}]},
+  {s:'Website',items:[{l:'Thumbnail uploaded',a:'Tom'},{l:'Game Sheet uploaded',a:'Tom'},{l:'Status set (Coming Soon/New)',a:''},{l:'Screenshots → Stefan R.',a:'Stefan R.'}]},
+  {s:'Support & Final',items:[{l:'Currency updates configured',a:'Laszlo'},{l:'Bet limits configured',a:'Laszlo'},{l:'Translations completed',a:'FE Dev'}]}
+];
+
+// ===== GOOGLE SHEETS API =====
+async function fetchSheet(sheetId, tabName) {
+  // Use Google Sheets API v4 with CORS support
+  const range = encodeURIComponent(tabName + '!A1:ZZ1000');
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${CONFIG.apiKey}&valueRenderOption=FORMATTED_VALUE`;
+  
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      const text = await res.text();
+      console.error(`Sheet API ${res.status} for "${tabName}":`, text.substring(0, 200));
+      throw new Error(`HTTP ${res.status} for ${tabName}`);
+    }
+    const data = await res.json();
+    return data.values || [];
+  } catch(e) {
+    // If direct API fails, try via Google Visualization API (no CORS issues)
+    console.warn(`Direct API failed for "${tabName}", trying Visualization API...`);
+    return fetchViaViz(sheetId, tabName);
+  }
+}
+
+// Fallback: Google Visualization API (works without CORS issues from file://)
+function fetchViaViz(sheetId, tabName) {
+  return new Promise((resolve, reject) => {
+    const callbackName = 'cb_' + Math.random().toString(36).substr(2, 9);
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:${callbackName}&sheet=${encodeURIComponent(tabName)}&tq=${encodeURIComponent('select *')}`;
+    
+    window[callbackName] = function(response) {
+      delete window[callbackName];
+      document.body.removeChild(script);
+      try {
+        if (response.status === 'error') {
+          reject(new Error(response.errors?.[0]?.message || 'Viz API error'));
+          return;
+        }
+        const table = response.table;
+        const rows = [];
+        // Header row from cols
+        const headers = table.cols.map(c => c.label || '');
+        if (headers.some(h => h)) rows.push(headers);
+        // Data rows
+        table.rows.forEach(r => {
+          rows.push(r.c.map(cell => {
+            if (!cell) return '';
+            if (cell.f) return cell.f; // formatted value
+            if (cell.v !== null && cell.v !== undefined) return String(cell.v);
+            return '';
+          }));
+        });
+        resolve(rows);
+      } catch(e) {
+        reject(e);
+      }
+    };
+    
+    const script = document.createElement('script');
+    script.src = url;
+    script.onerror = () => {
+      delete window[callbackName];
+      document.body.removeChild(script);
+      reject(new Error(`Failed to load sheet "${tabName}"`));
+    };
+    document.body.appendChild(script);
+  });
+}
+
+// ===== DATA LOADING =====
+async function loadAllData() {
+  setConn('loading','Fetching sheets…');
+  try {
+    const [certsRaw, proposalsRaw, italyRaw, brazilRaw, auditsRaw] = await Promise.all([
+      fetchSheet(CONFIG.sheets.certs.id, CONFIG.sheets.certs.tab).catch(e => { console.warn('Certs fetch failed:', e); return []; }),
+      fetchSheet(CONFIG.sheets.proposals.id, CONFIG.sheets.proposals.tab).catch(e => { console.warn('Proposals fetch failed:', e); return []; }),
+      fetchSheet(CONFIG.sheets.italy.id, CONFIG.sheets.italy.tab).catch(e => { console.warn('Italy fetch failed:', e); return []; }),
+      fetchSheet(CONFIG.sheets.brazil.id, CONFIG.sheets.brazil.tab).catch(e => { console.warn('Brazil fetch failed:', e); return []; }),
+      fetchSheet(CONFIG.sheets.audits.id, CONFIG.sheets.audits.tab).catch(e => { console.warn('Audits fetch failed:', e); return []; })
+    ]);
+    console.log('Sheets loaded:', {certs:certsRaw.length, proposals:proposalsRaw.length, italy:italyRaw.length, brazil:brazilRaw.length, audits:auditsRaw.length});
+    try { parseCerts(certsRaw); } catch(e) { console.error('parseCerts error:', e); }
+    try { parseProposals(proposalsRaw); } catch(e) { console.error('parseProposals error:', e); }
+    try { parseItaly(italyRaw); } catch(e) { console.error('parseItaly error:', e); }
+    try { parseBrazil(brazilRaw); } catch(e) { console.error('parseBrazil error:', e); }
+    try { parseAudits(auditsRaw); } catch(e) { console.error('parseAudits error:', e); }
+    try { initPipeline(); } catch(e) { console.error('initPipeline error:', e); }
+    setConn('ok','Live · ' + new Date().toLocaleTimeString());
+    document.getElementById('loadingOverlay').style.display='none';
+    document.getElementById('mktContent').style.display='block';
+    renderAll();
+  } catch(e) {
+    console.error('Load error:', e);
+    setConn('err','Failed: ' + e.message);
+    document.getElementById('loadingOverlay').innerHTML = `<div style="color:var(--red);font-size:13px;font-weight:600">⚠ Connection failed</div><div class="load-msg">${e.message}</div><div class="load-msg" style="margin-top:8px">Check that all 3 sheets are shared as "Anyone with the link" and try refreshing.</div><button class="tbtn" style="margin-top:12px" onclick="refreshData()">↻ Try Again</button>`;
+  }
+}
+
+function setConn(state, msg) {
+  const el = document.getElementById('connStatus');
+  el.className = 'conn ' + state;
+  el.innerHTML = `<div class="conn-dot"></div><span>${msg}</span>`;
+}
+
+// ===== PARSERS =====
+function parseCerts(raw) {
+  if (raw.length < 3) return;
+  DB.mktCerts = [];
+  // Find the row with "Game Name" to determine where data starts
+  let startRow = 0;
+  for (let i = 0; i < Math.min(5, raw.length); i++) {
+    const first = (raw[i][0]||'').toString().toLowerCase();
+    if (first === 'game name' || first === 'game') { startRow = i; break; }
+  }
+  // Skip header, RNG, RGS rows
+  for (let i = startRow + 1; i < raw.length; i++) {
+    const row = raw[i];
+    if (!row || !row[0]) continue;
+    const name = (row[0]+'').trim();
+    if (name === 'RNG' || name === 'RGS' || name === '') continue;
+    const game = { name, markets: {} };
+    CONFIG.markets.forEach(m => {
+      const val = (row[m.col] || '').toString().trim();
+      let status = 'notavailable', testLab = '', link = '';
+      if (val === 'X' || val === '' || val === 'x') { status = 'notavailable'; }
+      else if (val === 'N/A' || val === 'n/a') { status = 'na'; }
+      else if (val.toLowerCase().includes('in progress')) { status = 'inprogress'; testLab = val; }
+      else if (val.toLowerCase().includes('proposal')) { status = 'inprogress'; testLab = val; }
+      else {
+        status = 'certified';
+        const parts = val.split(' ');
+        testLab = parts[0] || '';
+        if (val.toLowerCase().includes('link')) link = val;
+      }
+      game.markets[m.id] = { status, testLab, link, raw: val };
+    });
+    DB.mktCerts.push(game);
+  }
+  console.log(`Parsed ${DB.mktCerts.length} games in market certs`);
+}
+
+function parseProposals(raw) {
+  if (raw.length < 2) return;
+  DB.proposals = [];
+  for (let i = 1; i < raw.length; i++) {
+    const row = raw[i];
+    if (!row || !row[0]) continue;
+    if (!row[1]) continue; // No proposal ID = empty row
+    DB.proposals.push({
+      no: row[0] || '',
+      id: row[1] || '',
+      type: row[2] || '',
+      markets: row[3] || '',
+      deadline: row[4] || '',
+      status: row[5] || ''
+    });
+  }
+}
+
+function parseItaly(raw) {
+  if (raw.length < 4) return;
+  console.log('Italy raw rows:', raw.length, 'First row sample:', (raw[0]||[]).slice(0,6));
+  console.log('Italy row 1:', (raw[1]||[]).slice(0,6));
+  console.log('Italy row 2:', (raw[2]||[]).slice(0,6));
+  console.log('Italy row 3:', (raw[3]||[]).slice(0,6));
+  
+  // Find the row that contains operator names (has values at col 3+)
+  // And find the row with "Game Name" header
+  let opRow = 0, headerRow = 2, dataStart = 3;
+  for (let i = 0; i < Math.min(5, raw.length); i++) {
+    const r = raw[i] || [];
+    if ((r[0]||'').toString().toLowerCase().includes('game name')) {
+      headerRow = i;
+      dataStart = i + 1;
+    }
+  }
+  // Operator names are above the header row
+  if (headerRow >= 1) opRow = 0;
+  
+  const ops = [];
+  const row0 = raw[opRow] || [];
+  const row1 = raw[opRow + 1] || [];
+  
+  // Detect column layout: look for ADM/status pattern
+  // In the original Excel: col 3,5,7,... are ADM, col 4,6,8,... are status (every 2 cols)
+  // But Viz API might merge differently
+  // Try the known pattern first: every 2 cols from col 3
+  for (let c = 3; c < Math.max(row0.length, 50); c += 2) {
+    const name = (row0[c] || '').toString().trim();
+    if (name && name !== 'ADM codes' && name !== 'Branded cert status') {
+      ops.push({ name, details: (row1[c]||'').toString().substring(0,200), colAdm: c, colSt: c+1 });
+    }
+  }
+  
+  // If no ops found with stride 2, try checking headers row for pattern
+  if (ops.length === 0) {
+    const hdr = raw[headerRow] || [];
+    console.log('Italy headers:', hdr.slice(0, 20));
+    // Try to find ADM/status column pairs
+    for (let c = 3; c < hdr.length; c++) {
+      const h = (hdr[c]||'').toString().toLowerCase();
+      if (h.includes('adm')) {
+        // Look for operator name above this column
+        const opName = (row0[c]||row0[c-1]||'').toString().trim();
+        if (opName) {
+          ops.push({ name: opName, details: (row1[c]||'').toString().substring(0,200), colAdm: c, colSt: c+1 });
+        }
+      }
+    }
+  }
+  
+  console.log(`Italy: found ${ops.length} operators, data starts row ${dataStart}`);
+  
+  DB.branded.italy.ops = ops.map(o => ({name:o.name, details:o.details}));
+  DB.branded.italy.games = [];
+  for (let i = dataStart; i < raw.length; i++) {
+    const row = raw[i];
+    if (!row || !row[0]) continue;
+    const gameName = (row[0]+'').trim();
+    if (!gameName) continue;
+    const game = { name: gameName, link: row[1]||'', certs: [] };
+    ops.forEach(op => {
+      const adm = (row[op.colAdm]||'').toString().trim();
+      let status = (row[op.colSt]||'').toString().trim();
+      if (!status || status === '/') status = 'Pending';
+      if (status === 'N/A') status = 'N/A';
+      else if (status.toLowerCase().includes('received')) status = 'Received';
+      else if (status.toLowerCase().includes('sent')) status = 'Sent';
+      else if (status.toLowerCase().includes('request')) status = 'Requested';
+      else if (/^\d+\.?\d*$/.test(status)) status = 'Pending';
+      const admClean = (adm === '/' || adm === 'N/A' || adm === '') ? '' : adm;
+      game.certs.push({ operator: op.name, adm_code: admClean, status });
+    });
+    DB.branded.italy.games.push(game);
+  }
+  console.log(`Italy: parsed ${DB.branded.italy.games.length} games`);
+}
+
+function parseBrazil(raw) {
+  if (raw.length < 5) return;
+  console.log('Brazil raw rows:', raw.length, 'Row 0:', (raw[0]||[]).slice(0,6));
+  console.log('Brazil row 1:', (raw[1]||[]).slice(0,6));
+  console.log('Brazil row 4:', (raw[4]||[]).slice(0,6));
+  
+  const row2 = raw[1] || [];
+  const ops = [];
+  for (let c = 1; c < row2.length; c++) {
+    const name = (row2[c]||'').toString().trim();
+    if (name && name !== '') ops.push({ name, col: c });
+  }
+  console.log(`Brazil: found ${ops.length} operators`);
+  
+  DB.branded.brazil.ops = ops.map(o => ({name:o.name, details:''}));
+  DB.branded.brazil.games = [];
+  for (let i = 4; i < raw.length; i++) {
+    const row = raw[i];
+    if (!row || !row[0]) continue;
+    const gameName = (row[0]+'').trim();
+    if (!gameName) continue;
+    const game = { name: gameName, certs: [] };
+    ops.forEach(op => {
+      let status = (row[op.col]||'').toString().trim();
+      if (!status || status === '-') status = 'Pending';
+      else if (status === 'N/A') status = 'N/A';
+      else if (status.toLowerCase().includes('received')) status = 'Received';
+      else if (status.toLowerCase().includes('sent')) status = 'Sent';
+      game.certs.push({ operator: op.name, adm_code: '', status });
+    });
+    DB.branded.brazil.games.push(game);
+  }
+  console.log(`Brazil: parsed ${DB.branded.brazil.games.length} games`);
+}
+
+function parseAudits(raw) {
+  if (raw.length < 3) return;
+  DB.audits = [];
+  for (let i = 2; i < raw.length; i++) {
+    const row = raw[i];
+    if (!row || !row[0]) continue;
+    DB.audits.push({
+      games: (row[0]||'').replace(/\n/g, ', '),
+      operator: row[1]||'',
+      testLab: row[2]||'',
+      month: row[3]||'',
+      status: row[4]||'',
+      link: row[5]||''
+    });
+  }
+}
+
+// ===== TAB SWITCHING =====
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on');
+    document.querySelectorAll('.tc').forEach(x=>x.classList.remove('on'));
+    document.getElementById('tc-'+t.dataset.t).classList.add('on');
+  });
+});
+
+// ===== RENDER ALL =====
+function renderAll() {
+  renderMktCerts();
+  renderBranded();
+  renderProposals();
+  renderAudits();
+  renderContacts();
+  renderPipeline();
+}
+
+// ===== MARKET CERTS =====
+function renderMktCerts() {
+  const fSt = document.getElementById('fMktStatus').value;
+  const mkts = CONFIG.markets;
+
+  // Stats
+  let cert=0,prog=0,notav=0,total=0;
+  DB.mktCerts.forEach(g => mkts.forEach(m => {
+    const s = g.markets[m.id]?.status;
+    total++;
+    if (s==='certified') cert++;
+    else if (s==='inprogress') prog++;
+    else notav++;
+  }));
+  const active = cert+prog;
+  const pct = active ? Math.round(cert/active*100) : 0;
+  document.getElementById('mktStats').innerHTML = `
+    <div class="st${!fSt?' on':''}" onclick="fMktStat('')"><div class="sv" style="color:var(--acc)">${DB.mktCerts.length}</div><div class="sl">Games</div></div>
+    <div class="st${fSt==='certified'?' on':''}" onclick="fMktStat('certified')"><div class="sv" style="color:var(--grn)">${cert}</div><div class="sl">Certified</div></div>
+    <div class="st${fSt==='inprogress'?' on':''}" onclick="fMktStat('inprogress')"><div class="sv" style="color:var(--ylw)">${prog}</div><div class="sl">In Progress</div></div>
+    <div class="st${fSt==='notavailable'?' on':''}" onclick="fMktStat('notavailable')"><div class="sv" style="color:var(--tx3)">${notav}</div><div class="sl">Not Available</div></div>
+  `;
+
+  // Table header
+  document.getElementById('mktHead').innerHTML = `<tr><th class="sk">Game</th>${mkts.map(m => {
+    const icon = m.hasBranded ? ' 📋' : m.hasSymbolMap ? ' 🗺️' : '';
+    return `<th class="sc" style="cursor:pointer" title="${m.hasBranded?'Has branded certs — click to drill down':m.hasSymbolMap?'Requires symbol mapping (Portugal)':m.name}">${m.name}${icon}</th>`;
+  }).join('')}</tr>`;
+
+  // Filter games
+  let games = DB.mktCerts;
+  if (searchQ) games = games.filter(g => g.name.toLowerCase().includes(searchQ));
+  if (fSt) games = games.filter(g => mkts.some(m => g.markets[m.id]?.status === fSt));
+
+  const tbody = document.getElementById('mktBody');
+  tbody.innerHTML = '';
+  games.forEach(g => {
+    let html = `<td class="sk">${g.name}</td>`;
+    mkts.forEach(m => {
+      const d = g.markets[m.id] || {status:'notavailable'};
+      const cls = d.status;
+      const dim = fSt && d.status !== fSt ? ' dim' : '';
+      const label = d.status === 'certified' ? '✓' : d.status === 'inprogress' ? '⏳' : '—';
+      const lab = d.testLab ? `<div class="adm">${d.testLab}</div>` : '';
+      
+      // Click handler: if market has branded, drill into branded tab
+      let onclick = '';
+      if (m.hasBranded && d.status === 'certified') {
+        onclick = `onclick="drillBranded('${m.id}','${g.name.replace(/'/g,"\\'")}')"`;
+      }
+      
+      html += `<td class="sc${dim}"><span class="bg ${cls}" ${onclick} title="${d.raw||d.status}">${label}</span>${lab}</td>`;
+    });
+    const tr = document.createElement('tr');
+    tr.innerHTML = html;
+    tbody.appendChild(tr);
+  });
+  if (!games.length) tbody.innerHTML = `<tr><td colspan="${mkts.length+1}" style="text-align:center;padding:30px;color:var(--tx3)">No games match</td></tr>`;
+}
+
+function fMktStat(s) {
+  const sel = document.getElementById('fMktStatus');
+  sel.value = sel.value === s ? '' : s;
+  renderMktCerts();
+}
+function clearMktF() { document.getElementById('fMktStatus').value=''; searchQ=''; document.getElementById('searchInput').value=''; renderMktCerts(); }
+
+function drillBranded(mktId, gameName) {
+  // Switch to branded tab with market pre-selected
+  document.getElementById('fBrdMarket').value = mktId;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelector('[data-t="branded"]').classList.add('on');
+  document.querySelectorAll('.tc').forEach(t=>t.classList.remove('on'));
+  document.getElementById('tc-branded').classList.add('on');
+  searchQ = gameName.toLowerCase();
+  document.getElementById('searchInput').value = gameName;
+  renderBranded();
+}
+
+// ===== BRANDED CERTS =====
+function renderBranded() {
+  const mkt = document.getElementById('fBrdMarket').value;
+  const data = DB.branded[mkt];
+  if (!data || !data.games.length) {
+    document.getElementById('brdBody').innerHTML = `<tr><td colspan="2" style="text-align:center;padding:30px;color:var(--tx3)">No branded cert data loaded for this market</td></tr>`;
+    document.getElementById('brdStats').innerHTML = '';
+    return;
+  }
+
+  const fOp = document.getElementById('fBrdOp').value;
+  const fSt = document.getElementById('fBrdSt').value;
+  const ops = data.ops;
+
+  // Populate operator dropdown
+  const opSel = document.getElementById('fBrdOp');
+  const cv = opSel.value;
+  opSel.innerHTML = '<option value="">All Operators</option>';
+  ops.forEach(o => opSel.innerHTML += `<option value="${o.name}">${o.name}</option>`);
+  opSel.value = cv;
+
+  let vOps = fOp ? ops.filter(o=>o.name===fOp) : ops;
+
+  // Stats
+  let r=0,s=0,p=0,na=0;
+  data.games.forEach(g=>g.certs.forEach(c=>{
+    if(c.status==='Received') r++;
+    else if(c.status==='Sent') s++;
+    else if(c.status==='N/A') na++;
+    else p++;
+  }));
+  const act = r+s+p;
+  const pct = act ? Math.round(r/act*100) : 0;
+  document.getElementById('nbPend').textContent = p;
+  document.getElementById('brdStats').innerHTML = `
+    <div class="st${!fSt?' on':''}" onclick="fBrdStat('')"><div class="sv" style="color:var(--acc)">${act}</div><div class="sl">Active</div><div class="pb"><div class="pf" style="width:${pct}%;background:var(--grn)"></div></div></div>
+    <div class="st${fSt==='Received'?' on':''}" onclick="fBrdStat('Received')"><div class="sv" style="color:var(--grn)">${r}</div><div class="sl">Received</div></div>
+    <div class="st${fSt==='Sent'?' on':''}" onclick="fBrdStat('Sent')"><div class="sv" style="color:var(--ylw)">${s}</div><div class="sl">Sent</div></div>
+    <div class="st${fSt==='Pending'?' on':''}" onclick="fBrdStat('Pending')"><div class="sv" style="color:var(--red)">${p}</div><div class="sl">Pending</div></div>
+  `;
+
+  // Table
+  document.getElementById('brdHead').innerHTML = `<tr><th class="sk">Game</th>${vOps.map(o=>`<th class="sc" style="cursor:pointer" onclick="openOpPanel('${mkt}','${o.name.replace(/'/g,"\\'")}')">${o.name}</th>`).join('')}</tr>`;
+
+  let games = data.games;
+  if (searchQ) games = games.filter(g=>g.name.toLowerCase().includes(searchQ));
+  if (fSt) games = games.filter(g=>g.certs.some(c=>vOps.some(o=>o.name===c.operator)&&c.status===fSt));
+
+  const tbody = document.getElementById('brdBody');
+  tbody.innerHTML = '';
+  games.forEach((game,gi) => {
+    const ri = data.games.indexOf(game);
+    let html = `<td class="sk">${game.name}</td>`;
+    vOps.forEach(op => {
+      const cert = game.certs.find(c=>c.operator===op.name);
+      if (!cert) { html += `<td class="sc">—</td>`; return; }
+      const ci = game.certs.indexOf(cert);
+      const cls = cert.status.toLowerCase().replace(/[^a-z]/g,'') || 'pending';
+      const dim = fSt && cert.status !== fSt ? ' dim' : '';
+      const adm = cert.adm_code ? `<div class="adm">${cert.adm_code}</div>` : '';
+      html += `<td class="sc${dim}"><span class="bg ${cls}" onclick="openEdit('${mkt}',${ri},${ci})">${cert.status||'Pending'}</span>${adm}</td>`;
+    });
+    const tr = document.createElement('tr'); tr.innerHTML = html; tbody.appendChild(tr);
+  });
+  if (!games.length) tbody.innerHTML = `<tr><td colspan="${vOps.length+1}" style="text-align:center;padding:30px;color:var(--tx3)">No games match</td></tr>`;
+}
+
+function fBrdStat(s) { const sel=document.getElementById('fBrdSt'); sel.value=sel.value===s?'':s; renderBranded(); }
+function clearBrdF() { document.getElementById('fBrdOp').value='';document.getElementById('fBrdSt').value='';searchQ='';document.getElementById('searchInput').value='';renderBranded(); }
+
+// ===== PROPOSALS =====
+function renderProposals() {
+  const tbody = document.getElementById('propBody');
+  tbody.innerHTML = '';
+  document.getElementById('nbProp').textContent = DB.proposals.filter(p=>p.status==='In Progress').length;
+  DB.proposals.forEach(p => {
+    if (!p.id) return;
+    const cls = p.status==='Completed'?'completed':p.status==='In Progress'?'inprogress':'pending';
+    tbody.innerHTML += `<tr>
+      <td style="font-family:var(--mono);font-size:10px">${p.no}</td>
+      <td style="font-family:var(--mono);font-size:10px;font-weight:600">${p.id}</td>
+      <td style="max-width:300px">${p.type}</td>
+      <td>${p.markets}</td>
+      <td style="font-size:10px;white-space:pre-line">${p.deadline}</td>
+      <td><span class="bg ${cls}">${p.status}</span></td>
+    </tr>`;
+  });
+}
+
+// ===== AUDITS =====
+function renderAudits() {
+  const tbody = document.getElementById('auditBody');
+  tbody.innerHTML = '';
+  DB.audits.forEach(a => {
+    const cls = a.status==='Delivered'?'completed':'pending';
+    tbody.innerHTML += `<tr><td style="max-width:260px;white-space:pre-line;font-size:10px">${a.games}</td><td>${a.operator}</td><td>${a.testLab}</td><td style="font-family:var(--mono);font-size:10px">${a.month}</td><td><span class="bg ${cls}">${a.status}</span></td></tr>`;
+  });
+}
+
+// ===== CONTACTS =====
+function renderContacts() {
+  document.getElementById('ccGrid').innerHTML = CONTACTS.map(c=>`<div class="cc"><div class="cc-r">${c.role}</div><div class="cc-n">${c.name}</div><div class="cc-d">${c.note}</div></div>`).join('');
+}
+
+// ===== PIPELINE =====
+const STAGES=['dev','proposal','cert','distrib','market','website','live'];
+const SLBL={dev:'Dev Start',proposal:'Proposal',cert:'Cert',distrib:'Distrib.',market:'Mkt Req',website:'Website',live:'Live'};
+
+function initPipeline() {
+  pipeGames = DB.mktCerts.slice(0,25).map(g => {
+    const certs = Object.values(g.markets);
+    const certCount = certs.filter(c=>c.status==='certified').length;
+    const total = certs.filter(c=>c.status!=='notavailable'&&c.status!=='na').length;
+    let stage = 'dev';
+    if (certCount>0 && certCount>=total*.8) stage='website';
+    else if (certCount>0) stage='distrib';
+    else if (total>0) stage='cert';
+    return { name:g.name, stage, cl: JSON.parse(JSON.stringify(CL_TPL)).map(s=>({...s,items:s.items.map(it=>({...it,d:stage==='website'||stage==='live'}))})) };
+  });
+  const sel = document.getElementById('clSel');
+  sel.innerHTML = '<option value="">Select game…</option>';
+  pipeGames.forEach((g,i) => sel.innerHTML += `<option value="${i}">${g.name}</option>`);
+}
+
+function renderPipeline() {
+  const el = document.getElementById('pipeList');
+  el.innerHTML = pipeGames.map((g,gi) => {
+    const si = STAGES.indexOf(g.stage);
+    const tot = g.cl.reduce((a,s)=>a+s.items.length,0);
+    const dn = g.cl.reduce((a,s)=>a+s.items.filter(i=>i.d).length,0);
+    const pct = tot?Math.round(dn/tot*100):0;
+    return `<div class="pl-c"><div class="pl-n">${g.name} <span class="bg s ${pct===100?'done':pct>50?'inprogress':'todo'}">${pct}%</span></div>
+    <div class="pl-stages">${STAGES.map((s,i)=>`<div class="pl-stg ${i<si?'c':i===si?'a':'u'}" onclick="setPStage(${gi},'${s}')">${SLBL[s]}</div>`).join('')}</div>
+    <div class="pb"><div class="pf" style="width:${pct}%;background:${pct===100?'var(--grn)':'var(--ylw)'}"></div></div>
+    <div style="margin-top:6px;font-size:10px;color:var(--tx2)">${dn}/${tot} tasks · <span style="color:var(--acc);cursor:pointer" onclick="openCL(${gi})">Open checklist →</span></div></div>`;
+  }).join('');
+}
+
+function setPStage(gi,s){pipeGames[gi].stage=s;renderPipeline()}
+function openCL(gi){document.getElementById('clSel').value=gi;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.querySelector('[data-t="checklist"]').classList.add('on');document.querySelectorAll('.tc').forEach(t=>t.classList.remove('on'));document.getElementById('tc-checklist').classList.add('on');renderCL()}
+
+// ===== CHECKLIST =====
+function renderCL() {
+  const gi = document.getElementById('clSel').value;
+  const w = document.getElementById('clWrap');
+  if (gi===''){w.innerHTML='<div style="text-align:center;padding:30px;color:var(--tx3)">Select a game above</div>';return}
+  const g = pipeGames[gi]; if(!g)return;
+  const tot = g.cl.reduce((a,s)=>a+s.items.length,0);
+  const dn = g.cl.reduce((a,s)=>a+s.items.filter(i=>i.d).length,0);
+  const pct = tot?Math.round(dn/tot*100):0;
+  w.innerHTML = `<div style="margin-bottom:14px"><div style="font-size:16px;font-weight:700">${g.name}</div><div style="font-size:11px;color:var(--tx2);margin-top:1px">${dn}/${tot} (${pct}%)</div><div class="pb" style="margin-top:6px"><div class="pf" style="width:${pct}%;background:var(--grn)"></div></div></div>
+  ${g.cl.map((sec,si)=>{const sd=sec.items.filter(i=>i.d).length;return`<div class="cl-sec"><div class="cl-sh">${sec.s} <span class="ct">${sd}/${sec.items.length}</span></div>${sec.items.map((it,ii)=>`<div class="cl-i ${it.d?'dn':''}" onclick="togCL(${gi},${si},${ii})"><div class="cl-ck">${it.d?'✓':''}</div><div class="cl-lb">${it.l}</div>${it.a?`<div class="cl-as">${it.a}</div>`:''}</div>`).join('')}</div>`}).join('')}`;
+}
+function togCL(gi,si,ii){pipeGames[gi].cl[si].items[ii].d=!pipeGames[gi].cl[si].items[ii].d;renderCL();renderPipeline()}
+
+// ===== OPERATOR PANEL =====
+function openOpPanel(mkt,opName) {
+  const data = DB.branded[mkt]; if(!data) return;
+  const op = data.ops.find(o=>o.name===opName); if(!op)return;
+  let r=0,p=0,tot=0;const gList=[];
+  data.games.forEach(g=>{const c=g.certs.find(c=>c.operator===opName);if(!c||c.status==='N/A')return;tot++;if(c.status==='Received')r++;else p++;gList.push({name:g.name,status:c.status})});
+  const pct=tot?Math.round(r/tot*100):0;
+  document.getElementById('sPInner').innerHTML=`<h3>${opName}</h3><div class="sp-sub">${op.details||'No details'}</div>
+  <div class="sp-sts"><div class="sp-st"><div class="v" style="color:var(--grn)">${r}</div><div class="l">Received</div></div><div class="sp-st"><div class="v" style="color:var(--red)">${p}</div><div class="l">Pending</div></div><div class="sp-st"><div class="v" style="color:var(--acc)">${pct}%</div><div class="l">Complete</div></div></div>
+  <div class="pb" style="margin-bottom:12px"><div class="pf" style="width:${pct}%;background:var(--grn)"></div></div>
+  <ul class="sp-list">${gList.map(g=>`<li><span>${g.name}</span><span class="bg s ${g.status.toLowerCase().replace(/[^a-z]/g,'')||'pending'}">${g.status}</span></li>`).join('')}</ul>`;
+  document.getElementById('sPanel').classList.add('open');
+}
+function closeP(){document.getElementById('sPanel').classList.remove('open')}
+
+// ===== EDIT MODAL =====
+function openEdit(mkt,gi,ci) {
+  const data=DB.branded[mkt];const game=data.games[gi];const cert=game.certs[ci];
+  editTarget={mkt,gi,ci};
+  document.getElementById('moT').textContent='Edit Certificate';
+  document.getElementById('moS').textContent=`${game.name} → ${cert.operator}`;
+  document.getElementById('moSt').value=cert.status||'Pending';
+  document.getElementById('moAdm').value=cert.adm_code||'';
+  document.getElementById('moNotes').value=cert.notes||'';
+  document.getElementById('editMo').classList.add('open');
+}
+function closeMo(){document.getElementById('editMo').classList.remove('open');editTarget=null}
+function saveMo(){if(!editTarget)return;const c=DB.branded[editTarget.mkt].games[editTarget.gi].certs[editTarget.ci];c.status=document.getElementById('moSt').value;c.adm_code=document.getElementById('moAdm').value;c.notes=document.getElementById('moNotes').value;closeMo();renderBranded()}
+
+// ===== NEW GAME =====
+function openNewGame(){document.getElementById('newGMo').classList.add('open')}
+function closeNG(){document.getElementById('newGMo').classList.remove('open')}
+function saveNG(){
+  const n=document.getElementById('ngN').value.trim();if(!n)return;
+  pipeGames.unshift({name:n,stage:'dev',cl:JSON.parse(JSON.stringify(CL_TPL)).map(s=>({...s,items:s.items.map(i=>({...i,d:false}))}))});
+  const sel=document.getElementById('clSel');sel.innerHTML='<option value="">Select game…</option>';
+  pipeGames.forEach((g,i)=>sel.innerHTML+=`<option value="${i}">${g.name}</option>`);
+  closeNG();document.getElementById('ngN').value='';document.getElementById('ngI').value='';renderPipeline();
+}
+
+// ===== SEARCH =====
+function doSearch(q){searchQ=q.toLowerCase();renderMktCerts();renderBranded()}
+
+// ===== EXPORT =====
+function exportCSV() {
+  let csv = 'Game,' + CONFIG.markets.map(m=>m.name).join(',') + '\n';
+  DB.mktCerts.forEach(g => {
+    csv += '"'+g.name+'",' + CONFIG.markets.map(m=>(g.markets[m.id]||{}).status||'').join(',') + '\n';
+  });
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download=`esa_market_certs_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+}
+
+// ===== REFRESH =====
+function refreshData(){loadAllData()}
+
+// ===== KEYBOARD =====
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeMo();closeP();closeNG()}
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();document.getElementById('searchInput').focus()}
+});
+document.getElementById('editMo').addEventListener('click',function(e){if(e.target===this)closeMo()});
+document.getElementById('newGMo').addEventListener('click',function(e){if(e.target===this)closeNG()});
+
+// ===== BOOT =====
+loadAllData();
+</script>
+</body>
+</html>
