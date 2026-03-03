@@ -198,6 +198,7 @@ table.dt{width:100%;border-collapse:separate;border-spacing:0;font-size:11px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:2px}
 </style>
+<script src="config.js"></script>
 </head>
 <body>
 
@@ -319,7 +320,7 @@ table.dt{width:100%;border-collapse:separate;border-spacing:0;font-size:11px}
 <script>
 // ===== CONFIG =====
 const CONFIG = {
-  apiKey: 'AIzaSyC5duHYdeJ5xnQEtuHzzOVeEOaGz_v9tDA',
+  apiKey: (window.ESA_CONFIG && window.ESA_CONFIG.apiKey) || '',
   sheets: {
     certs:     { id: '1HuAv147P4XdCu6wZSp122nk98v81LIRmSJnZBOg4NUc', tab: 'ESA Games' },
     proposals: { id: '1lSsv-JhP_08TIqfG2h_fxR0OMM0JUkBXaxe1_HZi9PI', tab: 'Sheet1' },
