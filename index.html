@@ -568,12 +568,20 @@ function parseItaly(raw) {
   // But Viz API might merge differently
   // Try the known pattern first: every 2 cols from col 3
   for (let c = 3; c < Math.max(row0.length, 50); c += 2) {
-    const name = (row0[c] || '').toString().trim();
-    if (name && name !== 'ADM codes' && name !== 'Branded cert status') {
-      ops.push({ name, details: (row1[c]||'').toString().substring(0,200), colAdm: c, colSt: c+1 });
+    const rawName = (row0[c] || '').toString().trim();
+    if (rawName && rawName !== 'ADM codes' && rawName !== 'Branded cert status') {
+      // Extract short display name: stop at '(' or 'COMPANY:' keyword
+      const splitIdx = rawName.search(/\s*\(|\s+COMPANY\b/i);
+      const name = splitIdx > 0 ? rawName.substring(0, splitIdx).trim() : rawName;
+      const extraDetails = splitIdx > 0
+        ? rawName.substring(splitIdx).trim().replace(/\s+(COMPANY:|ADDRESS:|CONCESSIONAIRE NO:|PLATFORM NO:|ADM CODES?:?)/gi, '\n$1')
+        : '';
+      const row1Details = (row1[c]||'').toString().trim();
+      const details = [extraDetails, row1Details].filter(Boolean).join('\n').substring(0, 400);
+      ops.push({ name, details, colAdm: c, colSt: c+1 });
     }
   }
-  
+
   // If no ops found with stride 2, try checking headers row for pattern
   if (ops.length === 0) {
     const hdr = raw[headerRow] || [];
@@ -583,9 +591,16 @@ function parseItaly(raw) {
       const h = (hdr[c]||'').toString().toLowerCase();
       if (h.includes('adm')) {
         // Look for operator name above this column
-        const opName = (row0[c]||row0[c-1]||'').toString().trim();
-        if (opName) {
-          ops.push({ name: opName, details: (row1[c]||'').toString().substring(0,200), colAdm: c, colSt: c+1 });
+        const rawOpName = (row0[c]||row0[c-1]||'').toString().trim();
+        if (rawOpName) {
+          const splitIdx = rawOpName.search(/\s*\(|\s+COMPANY\b/i);
+          const opName = splitIdx > 0 ? rawOpName.substring(0, splitIdx).trim() : rawOpName;
+          const extraDetails = splitIdx > 0
+            ? rawOpName.substring(splitIdx).trim().replace(/\s+(COMPANY:|ADDRESS:|CONCESSIONAIRE NO:|PLATFORM NO:|ADM CODES?:?)/gi, '\n$1')
+            : '';
+          const row1Details = (row1[c]||'').toString().trim();
+          const details = [extraDetails, row1Details].filter(Boolean).join('\n').substring(0, 400);
+          ops.push({ name: opName, details, colAdm: c, colSt: c+1 });
         }
       }
     }
