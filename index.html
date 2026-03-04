@@ -316,10 +316,11 @@ table.dt{width:100%;border-collapse:separate;border-spacing:0;font-size:11px}
   <div class="mo-btns"><button class="btn btn-g" onclick="closeNG()">Cancel</button><button class="btn btn-p" onclick="saveNG()">Create</button></div>
 </div></div>
 
+<script src="config.js"></script>
 <script>
 // ===== CONFIG =====
 const CONFIG = {
-  apiKey: 'AIzaSyC5duHYdeJ5xnQEtuHzzOVeEOaGz_v9tDA',
+  apiKey: (window.ESA_CONFIG && window.ESA_CONFIG.apiKey) || '',
   sheets: {
     certs:     { id: '1HuAv147P4XdCu6wZSp122nk98v81LIRmSJnZBOg4NUc', tab: 'ESA Games' },
     proposals: { id: '1lSsv-JhP_08TIqfG2h_fxR0OMM0JUkBXaxe1_HZi9PI', tab: 'Sheet1' },
@@ -446,6 +447,10 @@ function fetchViaViz(sheetId, tabName) {
 
 // ===== DATA LOADING =====
 async function loadAllData() {
+  if (!CONFIG.apiKey) {
+    setConn('err', 'No API key — copy config.example.js to config.js');
+    return;
+  }
   setConn('loading','Fetching sheets…');
   try {
     const [certsRaw, proposalsRaw, italyRaw, brazilRaw, auditsRaw] = await Promise.all([

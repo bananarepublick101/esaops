@@ -1,0 +1,10 @@
+# Local configuration — contains real API keys, never commit this
+config.js
+
+# Common sensitive files
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
