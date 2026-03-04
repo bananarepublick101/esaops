@@ -1,11 +1,3 @@
-// Copy this file to config.js and set your Google API key.
-// config.js is listed in .gitignore and must never be committed to version control.
-//
-// To generate a restricted API key:
-//   1. Go to https://console.cloud.google.com/apis/credentials
-//   2. Create an API key and restrict it to the Google Sheets API
-//   3. Add HTTP referrer restrictions so the key only works on your domain
-//
-window.ESA_CONFIG = {
-  apiKey: 'YOUR_GOOGLE_SHEETS_API_KEY_HERE'
-};
+// config.js is no longer required.
+// Data is fetched via the public Google Visualization endpoint — no API key needed.
+// Sheets must be shared as "Anyone with the link can view".
