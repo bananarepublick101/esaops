@@ -8,5 +8,9 @@ if [ -z "$GOOGLE_API_KEY" ]; then
   exit 1
 fi
 
-echo "window.ESA_CONFIG = { apiKey: '${GOOGLE_API_KEY}' };" > config.js
+case "$GOOGLE_API_KEY" in
+  *[!A-Za-z0-9_-]*) echo "ERROR: GOOGLE_API_KEY contains unexpected characters"; exit 1 ;;
+esac
+
+printf "window.ESA_CONFIG = { apiKey: '%s' };\n" "$GOOGLE_API_KEY" > config.js
 echo "config.js generated"
