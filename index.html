@@ -447,18 +447,15 @@ function fetchViaViz(sheetId, tabName) {
 
 // ===== DATA LOADING =====
 async function loadAllData() {
-  if (!CONFIG.apiKey) {
-    setConn('err', 'No API key — copy config.example.js to config.js');
-    return;
-  }
   setConn('loading','Fetching sheets…');
+  const load = (id, tab) => fetchViaViz(id, tab).catch(e => { console.warn(`Fetch failed (${tab}):`, e); return []; });
   try {
     const [certsRaw, proposalsRaw, italyRaw, brazilRaw, auditsRaw] = await Promise.all([
-      fetchSheet(CONFIG.sheets.certs.id, CONFIG.sheets.certs.tab).catch(e => { console.warn('Certs fetch failed:', e); return []; }),
-      fetchSheet(CONFIG.sheets.proposals.id, CONFIG.sheets.proposals.tab).catch(e => { console.warn('Proposals fetch failed:', e); return []; }),
-      fetchSheet(CONFIG.sheets.italy.id, CONFIG.sheets.italy.tab).catch(e => { console.warn('Italy fetch failed:', e); return []; }),
-      fetchSheet(CONFIG.sheets.brazil.id, CONFIG.sheets.brazil.tab).catch(e => { console.warn('Brazil fetch failed:', e); return []; }),
-      fetchSheet(CONFIG.sheets.audits.id, CONFIG.sheets.audits.tab).catch(e => { console.warn('Audits fetch failed:', e); return []; })
+      load(CONFIG.sheets.certs.id, CONFIG.sheets.certs.tab),
+      load(CONFIG.sheets.proposals.id, CONFIG.sheets.proposals.tab),
+      load(CONFIG.sheets.italy.id, CONFIG.sheets.italy.tab),
+      load(CONFIG.sheets.brazil.id, CONFIG.sheets.brazil.tab),
+      load(CONFIG.sheets.audits.id, CONFIG.sheets.audits.tab)
     ]);
     console.log('Sheets loaded:', {certs:certsRaw.length, proposals:proposalsRaw.length, italy:italyRaw.length, brazil:brazilRaw.length, audits:auditsRaw.length});
     try { parseCerts(certsRaw); } catch(e) { console.error('parseCerts error:', e); }
@@ -568,12 +565,20 @@ function parseItaly(raw) {
   // But Viz API might merge differently
   // Try the known pattern first: every 2 cols from col 3
   for (let c = 3; c < Math.max(row0.length, 50); c += 2) {
-    const name = (row0[c] || '').toString().trim();
-    if (name && name !== 'ADM codes' && name !== 'Branded cert status') {
-      ops.push({ name, details: (row1[c]||'').toString().substring(0,200), colAdm: c, colSt: c+1 });
+    const rawName = (row0[c] || '').toString().trim();
+    if (rawName && rawName !== 'ADM codes' && rawName !== 'Branded cert status') {
+      // Extract short display name: stop at '(' or 'COMPANY:' keyword
+      const splitIdx = rawName.search(/\s*\(|\s+COMPANY\b/i);
+      const name = splitIdx > 0 ? rawName.substring(0, splitIdx).trim() : rawName;
+      const extraDetails = splitIdx > 0
+        ? rawName.substring(splitIdx).trim().replace(/\s+(COMPANY:|ADDRESS:|CONCESSIONAIRE NO:|PLATFORM NO:|ADM CODES?:?)/gi, '\n$1')
+        : '';
+      const row1Details = (row1[c]||'').toString().trim();
+      const details = [extraDetails, row1Details].filter(Boolean).join('\n').substring(0, 400);
+      ops.push({ name, details, colAdm: c, colSt: c+1 });
     }
   }
-  
+
   // If no ops found with stride 2, try checking headers row for pattern
   if (ops.length === 0) {
     const hdr = raw[headerRow] || [];
@@ -583,9 +588,16 @@ function parseItaly(raw) {
       const h = (hdr[c]||'').toString().toLowerCase();
       if (h.includes('adm')) {
         // Look for operator name above this column
-        const opName = (row0[c]||row0[c-1]||'').toString().trim();
-        if (opName) {
-          ops.push({ name: opName, details: (row1[c]||'').toString().substring(0,200), colAdm: c, colSt: c+1 });
+        const rawOpName = (row0[c]||row0[c-1]||'').toString().trim();
+        if (rawOpName) {
+          const splitIdx = rawOpName.search(/\s*\(|\s+COMPANY\b/i);
+          const opName = splitIdx > 0 ? rawOpName.substring(0, splitIdx).trim() : rawOpName;
+          const extraDetails = splitIdx > 0
+            ? rawOpName.substring(splitIdx).trim().replace(/\s+(COMPANY:|ADDRESS:|CONCESSIONAIRE NO:|PLATFORM NO:|ADM CODES?:?)/gi, '\n$1')
+            : '';
+          const row1Details = (row1[c]||'').toString().trim();
+          const details = [extraDetails, row1Details].filter(Boolean).join('\n').substring(0, 400);
+          ops.push({ name: opName, details, colAdm: c, colSt: c+1 });
         }
       }
     }
