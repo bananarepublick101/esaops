@@ -1,16 +1,7 @@
-# Local configuration — contains real API keys, never commit this
-config.js
-
-# Common sensitive files
+# Common sensitive files — never commit these
 .env
 .env.local
 .env.*.local
 *.pem
 *.key
 secrets/
-
-# wrangler files
-.wrangler
-.dev.vars*
-!.dev.vars.example
-!.env.example

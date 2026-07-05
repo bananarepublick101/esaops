@@ -316,11 +316,9 @@ table.dt{width:100%;border-collapse:separate;border-spacing:0;font-size:11px}
   <div class="mo-btns"><button class="btn btn-g" onclick="closeNG()">Cancel</button><button class="btn btn-p" onclick="saveNG()">Create</button></div>
 </div></div>
 
-<script src="config.js"></script>
 <script>
 // ===== CONFIG =====
 const CONFIG = {
-  apiKey: (window.ESA_CONFIG && window.ESA_CONFIG.apiKey) || '',
   sheets: {
     certs:     { id: '1HuAv147P4XdCu6wZSp122nk98v81LIRmSJnZBOg4NUc', tab: 'ESA Games' },
     proposals: { id: '1lSsv-JhP_08TIqfG2h_fxR0OMM0JUkBXaxe1_HZi9PI', tab: 'Sheet1' },
@@ -378,29 +376,7 @@ const CL_TPL = [
   {s:'Support & Final',items:[{l:'Currency updates configured',a:'Laszlo'},{l:'Bet limits configured',a:'Laszlo'},{l:'Translations completed',a:'FE Dev'}]}
 ];
 
-// ===== GOOGLE SHEETS API =====
-async function fetchSheet(sheetId, tabName) {
-  // Use Google Sheets API v4 with CORS support
-  const range = encodeURIComponent(tabName + '!A1:ZZ1000');
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${CONFIG.apiKey}&valueRenderOption=FORMATTED_VALUE`;
-  
-  try {
-    const res = await fetch(url);
-    if (!res.ok) {
-      const text = await res.text();
-      console.error(`Sheet API ${res.status} for "${tabName}":`, text.substring(0, 200));
-      throw new Error(`HTTP ${res.status} for ${tabName}`);
-    }
-    const data = await res.json();
-    return data.values || [];
-  } catch(e) {
-    // If direct API fails, try via Google Visualization API (no CORS issues)
-    console.warn(`Direct API failed for "${tabName}", trying Visualization API...`);
-    return fetchViaViz(sheetId, tabName);
-  }
-}
-
-// Fallback: Google Visualization API (works without CORS issues from file://)
+// ===== GOOGLE SHEETS (Visualization API — no key needed, works from file://) =====
 function fetchViaViz(sheetId, tabName) {
   return new Promise((resolve, reject) => {
     const callbackName = 'cb_' + Math.random().toString(36).substr(2, 9);
