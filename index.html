@@ -100,10 +100,10 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--tx);min-he
 .flts select{appearance:none;padding-right:20px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' fill='%235c6070'%3E%3Cpath d='M0 2l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center}
 
 /* ===== TABLES ===== */
-.tw{padding:0 20px 20px;overflow-x:auto}
+.tw{padding:0 20px 20px;overflow:auto;max-height:calc(100vh - 190px)}
 table.dt{width:100%;border-collapse:separate;border-spacing:0;font-size:11px}
-.dt thead th{position:sticky;top:0;z-index:5;background:var(--s1);padding:7px 6px;text-align:center;font-weight:600;color:var(--tx2);font-size:9px;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--brd);white-space:nowrap}
-.dt thead th.sk{position:sticky;left:0;z-index:10;background:var(--s1);min-width:140px;text-align:left}
+.dt thead th{position:sticky;top:0;z-index:5;background:var(--s1);padding:7px 6px;text-align:center;font-weight:600;color:var(--tx2);font-size:9px;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--brd);white-space:nowrap;box-shadow:0 1px 0 var(--brd)}
+.dt thead th.sk{position:sticky;left:0;top:0;z-index:11;background:var(--s1);min-width:140px;text-align:left}
 .dt tbody td{padding:4px 6px;border-bottom:1px solid var(--brd);vertical-align:middle}
 .dt tbody td.sk{position:sticky;left:0;z-index:2;background:var(--bg);font-weight:600;white-space:nowrap}
 .dt tbody tr:hover td{background:var(--s2)!important}
