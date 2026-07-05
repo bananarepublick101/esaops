@@ -10,10 +10,16 @@ Open `index.html` in any browser. That's it — it also works from `file://`.
 
 The Google Sheets it reads must be shared as **"Anyone with the link can view"**.
 
-## Deploy (GitHub Pages)
+## Deploy (Vercel)
 
-1. Merge this branch into `main`.
-2. On GitHub: **Settings → Pages → Source: Deploy from a branch → Branch: `main` / root → Save**.
-3. The dashboard goes live at `https://<user>.github.io/esaops/` within a minute or two.
+The repo lives on a self-hosted Gitea server, so use the Vercel CLI (it deploys
+straight from the folder — no GitHub/GitLab import needed):
 
-No secrets are involved anywhere in this repo, so a public repo is fine.
+```sh
+npm i -g vercel      # once
+vercel login         # once
+vercel --prod        # from the repo root — gives you a live URL
+```
+
+Vercel auto-detects this as a static site (no `package.json`, nothing to build).
+`vercel.json` adds a few safe security headers. No secrets are involved anywhere.
