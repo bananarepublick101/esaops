@@ -213,6 +213,7 @@ table.dt{width:100%;border-collapse:separate;border-spacing:0;font-size:11px}
   <button class="tab on" data-t="mktcerts">Market Certs</button>
   <button class="tab" data-t="branded">Branded Certs <span class="nbadge r" id="nbPend">0</span></button>
   <button class="tab" data-t="proposals">Proposals <span class="nbadge b" id="nbProp">0</span></button>
+  <button class="tab" data-t="requests">Requests <span class="nbadge r" id="nbReq" style="display:none">0</span></button>
   <button class="tab" data-t="pipeline">Pipeline</button>
   <button class="tab" data-t="checklist">Checklist</button>
   <button class="tab" data-t="audits">Audit Reports</button>
@@ -263,6 +264,36 @@ table.dt{width:100%;border-collapse:separate;border-spacing:0;font-size:11px}
   <div class="tw" style="padding-top:12px">
     <table class="dt"><thead><tr><th>#</th><th>Proposal ID</th><th>Project Type</th><th>Markets</th><th>Deadline</th><th>Status</th></tr></thead><tbody id="propBody"></tbody></table>
   </div>
+</div>
+
+<!-- ====== REQUESTS (certification hub tracker) ====== -->
+<div class="tc" id="tc-requests">
+  <div class="stats" id="reqStats"></div>
+  <div class="flts">
+    <select id="fReqType" onchange="renderRequests()">
+      <option value="">All Types</option>
+      <option value="Certification">Certification</option>
+      <option value="Branded">Branded</option>
+      <option value="Audit">Audit</option>
+      <option value="Other">Other</option>
+    </select>
+    <select id="fReqLab" onchange="renderRequests()">
+      <option value="">All Labs</option>
+      <option value="GA">GA</option>
+      <option value="Quinel">Quinel</option>
+      <option value="BMM">BMM</option>
+    </select>
+    <select id="fReqSt" onchange="renderRequests()">
+      <option value="open">Open only</option>
+      <option value="">All</option>
+      <option value="stale">⚠ Stale</option>
+      <option value="Waiting on lab">→ Waiting on lab</option>
+      <option value="Waiting on us">⚠ Waiting on us</option>
+      <option value="Done">✓ Done</option>
+    </select>
+    <button class="fb" onclick="clearReqF()">Clear</button>
+  </div>
+  <div class="tw"><table class="dt"><thead id="reqHead"></thead><tbody id="reqBody"></tbody></table></div>
 </div>
 
 <!-- ====== PIPELINE ====== -->
@@ -324,8 +355,10 @@ const CONFIG = {
     proposals: { id: '1lSsv-JhP_08TIqfG2h_fxR0OMM0JUkBXaxe1_HZi9PI', tab: 'Sheet1' },
     italy:     { id: '1FmTDM3sLNDusDTSyLeI1IrC1sMzNfiqrN8fCucut4-Q', tab: 'Italy Branded New x Stefan' },
     brazil:    { id: '1FmTDM3sLNDusDTSyLeI1IrC1sMzNfiqrN8fCucut4-Q', tab: 'Brazil Branded reports' },
-    audits:    { id: '1FmTDM3sLNDusDTSyLeI1IrC1sMzNfiqrN8fCucut4-Q', tab: 'Audit Branded Reports' }
+    audits:    { id: '1FmTDM3sLNDusDTSyLeI1IrC1sMzNfiqrN8fCucut4-Q', tab: 'Audit Branded Reports' },
+    requests:  { id: '1FmTDM3sLNDusDTSyLeI1IrC1sMzNfiqrN8fCucut4-Q', tab: 'Requests' }
   },
+  staleDays: { default: 5, Proposal: 3 },  // business days without lab activity
   markets: [
     {id:'mga',name:'MGA',col:1},
     {id:'italy',name:'Italy',col:2,hasBranded:true},
@@ -343,7 +376,7 @@ const CONFIG = {
 };
 
 // ===== GLOBAL STATE =====
-let DB = { mktCerts: [], branded: { italy: { ops:[], games:[] }, brazil: { ops:[], games:[] } }, proposals: [], audits: [] };
+let DB = { mktCerts: [], branded: { italy: { ops:[], games:[] }, brazil: { ops:[], games:[] } }, proposals: [], audits: [], requests: [] };
 let searchQ = '';
 let editTarget = null;
 let pipeGames = [];
@@ -426,12 +459,13 @@ async function loadAllData() {
   setConn('loading','Fetching sheets…');
   const load = (id, tab) => fetchViaViz(id, tab).catch(e => { console.warn(`Fetch failed (${tab}):`, e); return []; });
   try {
-    const [certsRaw, proposalsRaw, italyRaw, brazilRaw, auditsRaw] = await Promise.all([
+    const [certsRaw, proposalsRaw, italyRaw, brazilRaw, auditsRaw, requestsRaw] = await Promise.all([
       load(CONFIG.sheets.certs.id, CONFIG.sheets.certs.tab),
       load(CONFIG.sheets.proposals.id, CONFIG.sheets.proposals.tab),
       load(CONFIG.sheets.italy.id, CONFIG.sheets.italy.tab),
       load(CONFIG.sheets.brazil.id, CONFIG.sheets.brazil.tab),
-      load(CONFIG.sheets.audits.id, CONFIG.sheets.audits.tab)
+      load(CONFIG.sheets.audits.id, CONFIG.sheets.audits.tab),
+      load(CONFIG.sheets.requests.id, CONFIG.sheets.requests.tab)
     ]);
     console.log('Sheets loaded:', {certs:certsRaw.length, proposals:proposalsRaw.length, italy:italyRaw.length, brazil:brazilRaw.length, audits:auditsRaw.length});
     try { parseCerts(certsRaw); } catch(e) { console.error('parseCerts error:', e); }
@@ -439,6 +473,7 @@ async function loadAllData() {
     try { parseItaly(italyRaw); } catch(e) { console.error('parseItaly error:', e); }
     try { parseBrazil(brazilRaw); } catch(e) { console.error('parseBrazil error:', e); }
     try { parseAudits(auditsRaw); } catch(e) { console.error('parseAudits error:', e); }
+    try { parseRequests(requestsRaw); } catch(e) { console.error('parseRequests error:', e); }
     try { initPipeline(); } catch(e) { console.error('initPipeline error:', e); }
     setConn('ok','Live · ' + new Date().toLocaleTimeString());
     document.getElementById('loadingOverlay').style.display='none';
@@ -658,6 +693,130 @@ function parseAudits(raw) {
   }
 }
 
+function parseRequests(raw) {
+  DB.requests = [];
+  if (!raw || raw.length < 2) return;
+  // Header row = first row containing "Request ID"
+  let start = 1;
+  for (let i = 0; i < Math.min(3, raw.length); i++) {
+    if ((raw[i][0]||'').toString().toLowerCase().includes('request id')) { start = i + 1; break; }
+  }
+  for (let i = start; i < raw.length; i++) {
+    const r = raw[i];
+    if (!r || !r[0]) continue;
+    DB.requests.push({
+      id: (r[0]||'').toString().trim(),
+      created: (r[1]||'').toString().trim(),
+      type: (r[2]||'').toString().trim(),
+      market: (r[3]||'').toString().trim(),
+      operator: (r[4]||'').toString().trim(),
+      games: (r[5]||'').toString().trim(),
+      lab: (r[6]||'').toString().trim(),
+      sentTo: (r[7]||'').toString().trim(),
+      stage: (r[8]||'').toString().trim(),
+      status: (r[9]||'').toString().trim(),
+      lastActivity: (r[10]||'').toString().trim(),
+      chases: parseInt(r[11]) || 0,
+      lastChase: (r[12]||'').toString().trim(),
+      slack: (r[13]||'').toString().trim(),
+      drive: (r[14]||'').toString().trim(),
+      notes: (r[15]||'').toString().trim()
+    });
+  }
+  console.log(`Parsed ${DB.requests.length} requests`);
+}
+
+// ===== REQUESTS HELPERS =====
+function bizDaysSince(dateStr) {
+  const d = new Date(dateStr);
+  if (isNaN(d)) return null;
+  let count = 0;
+  const now = new Date();
+  const cur = new Date(d);
+  while (cur < now) {
+    cur.setDate(cur.getDate() + 1);
+    const dow = cur.getDay();
+    if (dow !== 0 && dow !== 6) count++;
+  }
+  return count;
+}
+function isStale(req) {
+  if (req.status === 'Done' || req.stage === 'Cancelled') return false;
+  if (req.status === 'Waiting on us') return false;
+  const days = bizDaysSince(req.lastActivity || req.created);
+  if (days === null) return false;
+  const limit = CONFIG.staleDays[req.stage] || CONFIG.staleDays.default;
+  return days > limit;
+}
+const STAGE_CLS = {
+  'Proposal':'requested','Proposal Signed':'requested',
+  'Submitted':'testing','In Testing':'testing','Supervised Build':'testing',
+  'Certificate Received':'received','Filed':'received',
+  'Branded Requested':'sent','Branded Received':'received',
+  'Distributed':'done','Cancelled':'na'
+};
+
+// ===== REQUESTS RENDER =====
+function renderRequests() {
+  const fT = document.getElementById('fReqType').value;
+  const fL = document.getElementById('fReqLab').value;
+  const fS = document.getElementById('fReqSt').value;
+
+  const all = DB.requests;
+  const open = all.filter(r => r.status !== 'Done' && r.stage !== 'Cancelled');
+  const stale = open.filter(isStale);
+  const waitLab = open.filter(r => r.status === 'Waiting on lab');
+  const done = all.filter(r => r.status === 'Done');
+
+  const nb = document.getElementById('nbReq');
+  nb.textContent = stale.length;
+  nb.style.display = stale.length ? '' : 'none';
+
+  document.getElementById('reqStats').innerHTML = `
+    <div class="st" onclick="fReqStat('open')"><div class="sv" style="color:var(--acc)">${open.length}</div><div class="sl">Open</div></div>
+    <div class="st" onclick="fReqStat('Waiting on lab')"><div class="sv" style="color:var(--ylw)">${waitLab.length}</div><div class="sl">Waiting on lab</div></div>
+    <div class="st" onclick="fReqStat('stale')"><div class="sv" style="color:var(--red)">${stale.length}</div><div class="sl">Stale</div></div>
+    <div class="st" onclick="fReqStat('Done')"><div class="sv" style="color:var(--grn)">${done.length}</div><div class="sl">Done</div></div>
+  `;
+
+  document.getElementById('reqHead').innerHTML = `<tr><th class="sk">Request</th><th>Type</th><th>Market</th><th>Operator</th><th>Games</th><th>Lab</th><th>Stage</th><th>Status</th><th class="sc">Waiting</th><th class="sc">Chases</th><th class="sc">Links</th></tr>`;
+
+  let rows = all;
+  if (fT) rows = rows.filter(r => r.type === fT);
+  if (fL) rows = rows.filter(r => r.lab === fL);
+  if (fS === 'open') rows = rows.filter(r => r.status !== 'Done' && r.stage !== 'Cancelled');
+  else if (fS === 'stale') rows = rows.filter(isStale);
+  else if (fS) rows = rows.filter(r => r.status === fS);
+  if (searchQ) rows = rows.filter(r => (r.id+' '+r.games+' '+r.operator+' '+r.market).toLowerCase().includes(searchQ));
+
+  const tbody = document.getElementById('reqBody');
+  tbody.innerHTML = '';
+  rows.forEach(r => {
+    const days = bizDaysSince(r.lastActivity || r.created);
+    const stle = isStale(r);
+    const stCls = stle ? 'pending' : r.status === 'Done' ? 'done' : r.status === 'Waiting on us' ? 'pending' : 'sent';
+    const waitTxt = days === null ? '—' : days + 'd' + (stle ? ' ⚠' : '');
+    const links = [
+      r.slack ? `<a class="link-icon" href="${r.slack}" target="_blank" title="Slack thread">💬</a>` : '',
+      r.drive ? `<a class="link-icon" href="${r.drive}" target="_blank" title="Drive folder">📁</a>` : ''
+    ].join(' ');
+    tbody.innerHTML += `<tr>
+      <td class="sk" title="${(r.notes||'').replace(/"/g,'&quot;')}"><span style="font-family:var(--mono);font-size:10px;font-weight:600">${r.id}</span><div class="adm">${r.created}</div></td>
+      <td>${r.type}</td><td>${r.market}</td><td>${r.operator||'—'}</td>
+      <td style="max-width:220px;font-size:10px">${r.games}</td>
+      <td><span class="bg s na" style="background:var(--s2);color:var(--tx2)">${r.lab}</span></td>
+      <td><span class="bg s ${STAGE_CLS[r.stage]||'pending'}">${r.stage}</span></td>
+      <td><span class="bg s ${stCls}">${stle?'Stale':(r.status||'Open')}</span></td>
+      <td class="sc" style="font-family:var(--mono);font-size:10px;${stle?'color:var(--red);font-weight:600':''}">${waitTxt}</td>
+      <td class="sc" style="font-family:var(--mono);font-size:10px">${r.chases||0}${r.lastChase?`<div class="adm">${r.lastChase}</div>`:''}</td>
+      <td class="sc">${links}</td>
+    </tr>`;
+  });
+  if (!rows.length) tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--tx3)">${DB.requests.length ? 'No requests match' : 'No Requests tab found — create it in the AM actions workbook (see compliance-colleague skill)'}</td></tr>`;
+}
+function fReqStat(s) { const sel = document.getElementById('fReqSt'); sel.value = sel.value === s ? '' : s; renderRequests(); }
+function clearReqF() { document.getElementById('fReqType').value=''; document.getElementById('fReqLab').value=''; document.getElementById('fReqSt').value='open'; searchQ=''; document.getElementById('searchInput').value=''; renderRequests(); }
+
 // ===== TAB SWITCHING =====
 document.querySelectorAll('.tab').forEach(t => {
   t.addEventListener('click', () => {
@@ -673,6 +832,7 @@ function renderAll() {
   renderMktCerts();
   renderBranded();
   renderProposals();
+  renderRequests();
   renderAudits();
   renderContacts();
   renderPipeline();
@@ -953,7 +1113,7 @@ function saveNG(){
 }
 
 // ===== SEARCH =====
-function doSearch(q){searchQ=q.toLowerCase();renderMktCerts();renderBranded()}
+function doSearch(q){searchQ=q.toLowerCase();renderMktCerts();renderBranded();renderRequests()}
 
 // ===== EXPORT =====
 function exportCSV() {
